@@ -122,6 +122,7 @@
       <div class="progress"><h2 style="margin:0">今日檢核</h2><span class="count" id="count">0 / 8</span></div>
       <div class="bar"><i id="bar"></i></div>
       <div id="checks"></div>
+      <p class="muted" style="margin-top:8px">點一下就會自動存檔。每天凌晨 4 點換日，4 點前做的都算前一天。</p>
     </div>
   </div>
 
@@ -139,6 +140,7 @@
     </div>
     <div class="card">
       <h2>怎麼看</h2>
+      <p class="muted" style="margin-bottom:6px">每天的勾選和排便紀錄都會保存在這裡。紀錄存在這支手機的瀏覽器裡，清除瀏覽器資料會一起消失。</p>
       <p class="muted">目標是平均間隔慢慢縮短，「費力」越來越少。照做 6–8 週仍沒改善，帶著這份紀錄去看腸胃科，醫師會很有參考價值。</p>
     </div>
   </div>
@@ -169,7 +171,6 @@
         <li>照做 6–8 週仍沒改善</li>
         <li>血便或黑便、體重莫名下降、劇烈腹痛</li>
         <li>腹瀉和便秘交替出現</li>
-        <li>家族有大腸癌病史</li>
       </ul>
       <p class="muted" style="margin-top:8px">從小就這樣、每次要很久，可能涉及骨盆底肌肉協調，醫師可安排檢查或生物回饋訓練。促進蠕動的藥（如 prucalopride）、軟便藥（如氧化鎂）需經醫師評估開立。</p>
     </div>
@@ -191,10 +192,10 @@
 <script>
 const ITEMS=[
   {t:'起床喝一杯溫水'},
-  {t:'吃了早餐'},
+  {t:'吃了早餐（有一份高纖）',s:'芭樂、地瓜，或全麥吐司'},
   {t:'早餐後去坐 5–10 分鐘',s:'腳墊高、身體微前傾，不硬擠'},
   {t:'喝水 1.5–2 公升'},
-  {t:'2 顆綠色奇異果，或幾顆黑棗'},
+  {t:'1–2 顆奇異果，或一份高纖食物',s:'紅肉火龍果、木瓜、芭樂、熟香蕉、地瓜、毛豆、黑木耳露'},
   {t:'運動 20–30 分鐘（任選一種）',s:'快走、爬樓梯、騎腳踏車、慢跑、跳繩、原地踏步、深蹲，可以拆成幾段'},
   {t:'睡前順時針按摩肚子 5 分鐘'},
   {t:'伸展 5 分鐘',s:'抱膝搖晃、仰躺扭轉、貓牛式、腹式呼吸'}
@@ -202,8 +203,8 @@ const ITEMS=[
 const PHASES=[
   {w:[1,2],name:'建立節奏',focus:'固定早餐後去坐，每天喝足水，有便意馬上去。',
    items:['固定早餐後如廁、起床溫水','每天喝水 1.5–2 公升','有便意馬上去，不要忍']},
-  {w:[3,4],name:'調整飲食',focus:'加入奇異果或黑棗，早餐換燕麥，每餐有蔬菜。',
-   items:['每天奇異果或黑棗','早餐換燕麥，每餐一份蔬菜','想加強可用洋車前子，從半小匙開始，配大量水']},
+  {w:[3,4],name:'調整飲食',focus:'每天 1–2 顆奇異果或一份高纖食物，早餐加一份高纖（芭樂、地瓜或全麥吐司）。',
+   items:['每天 1–2 顆奇異果，或一份高纖食物','早餐加一份高纖：芭樂、地瓜，或把白吐司換成全麥吐司','每餐有一份蔬菜']},
   {w:[5,8],name:'加入運動',focus:'每天運動 20–30 分鐘，任選一種，加上睡前伸展。',
    items:['每天運動 20–30 分鐘，從走路開始，習慣後加入跳繩、爬樓梯等','睡前按摩肚子、伸展 5 分鐘','觀察紀錄頁的平均間隔']}
 ];
@@ -223,7 +224,9 @@ let state={start:null,days:{}};
 
 const pad=n=>String(n).padStart(2,'0');
 const keyOf=d=>d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
-const todayKey=()=>keyOf(new Date());
+// 凌晨 4 點換日：4 點前都算前一天
+const logicalNow=()=>{const d=new Date();d.setHours(d.getHours()-4);return d;};
+const todayKey=()=>keyOf(logicalNow());
 const parse=k=>{const [y,m,d]=k.split('-').map(Number);return new Date(y,m-1,d);};
 const diffDays=(a,b)=>Math.round((parse(b)-parse(a))/86400000);
 const day=k=>state.days[k]||(state.days[k]={checked:ITEMS.map(()=>false),bm:null});
@@ -243,7 +246,7 @@ function weekNo(){return Math.floor(diffDays(state.start,todayKey())/7)+1;}
 function phaseNow(){const w=weekNo();return PHASES.find(p=>w>=p.w[0]&&w<=p.w[1])||PHASES[2];}
 
 function renderHeader(tab){
-  const d=new Date();
+  const d=logicalNow();
   const wd='日一二三四五六'[d.getDay()];
   document.getElementById('dateLabel').textContent=`${d.getMonth()+1}月${d.getDate()}日 星期${wd}`;
   document.getElementById('title').textContent={today:'今天',log:'紀錄',plan:'計畫'}[tab];
@@ -290,12 +293,12 @@ function renderLog(){
     let sum=0;for(let i=1;i<a.length;i++)sum+=diffDays(a[i-1],a[i]);
     document.getElementById('stAvg').textContent=(sum/(a.length-1)).toFixed(1);
   }else document.getElementById('stAvg').textContent='–';
-  let done=0;const now=new Date();
+  let done=0;const now=logicalNow();
   for(let i=0;i<7;i++){const d=new Date(now);d.setDate(now.getDate()-i);const r=state.days[keyOf(d)];if(r)done+=r.checked.filter(Boolean).length;}
   document.getElementById('stHabit').textContent=Math.round(done/(7*ITEMS.length)*100)+'%';
 
   const grid=document.getElementById('days');grid.innerHTML='';
-  const end=new Date();const startD=new Date(end);startD.setDate(end.getDate()-27);
+  const end=logicalNow();const startD=new Date(end);startD.setDate(end.getDate()-27);
   for(let i=0;i<28;i++){
     const d=new Date(startD);d.setDate(startD.getDate()+i);
     const k=keyOf(d);const r=state.days[k];
@@ -328,7 +331,14 @@ function render(){
   if(current==='log')renderLog();
   if(current==='plan')renderPlan();
   window.scrollTo(0,0);
+  shownKey=todayKey();
 }
+// 切回 App 或開著跨過換日時間，自動換成新的一天
+let shownKey=null;
+function checkDay(){if(shownKey&&todayKey()!==shownKey){current='today';render();}}
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)checkDay();});
+window.addEventListener('focus',checkDay);
+setInterval(checkDay,60000);
 document.querySelectorAll('nav button').forEach(b=>b.addEventListener('click',()=>{current=b.dataset.tab;render();}));
 
 let confirmRestart=false;
