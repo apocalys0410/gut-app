@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>腸道改善</title>
+<meta name="theme-color" content="#1F4E5A">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="腸道改善">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="icon" href="icon-192.png">
+<link rel="manifest" href="manifest.json">
+<style>
+  :root{
+    --sky:#EAF3F6; --deep:#1F4E5A; --teal:#3C8A8F; --sun:#F2C14E;
+    --ink:#22313A; --muted:#5C6E77; --alert:#B5473A; --paper:#FFFFFF; --line:#D7E6EB;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{font-family:"PingFang TC","Noto Sans TC","Microsoft JhengHei",system-ui,sans-serif;
+    background:var(--sky);color:var(--ink);font-size:15px;line-height:1.6}
+  .app{max-width:520px;margin:0 auto;min-height:100%;padding:20px 16px 96px}
+  .top{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:14px}
+  .top h1{font-size:22px;color:var(--deep);line-height:1.2}
+  .top .date{color:var(--muted);font-size:13px}
+  .week{background:var(--deep);color:#fff;border-radius:999px;padding:4px 12px;font-size:13px;white-space:nowrap}
+  .card{background:var(--paper);border-radius:16px;padding:16px;margin-bottom:12px}
+  h2{font-size:16px;color:var(--deep);margin-bottom:10px}
+  .muted{color:var(--muted);font-size:13px}
+  .hidden{display:none}
+
+  /* focus banner */
+  .focus{background:var(--sun);border-radius:16px;padding:14px 16px;margin-bottom:12px}
+  .focus b{color:var(--deep)}
+
+  /* bowel log */
+  .bm{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+  .bm button{border:2px solid var(--line);background:var(--paper);border-radius:12px;padding:10px 4px;
+    font:inherit;font-size:14px;color:var(--ink);cursor:pointer}
+  .bm button span{display:block;font-size:22px;line-height:1.3}
+  .bm button.on{border-color:var(--teal);background:var(--sky);font-weight:700;color:var(--deep)}
+  .since{margin-top:10px}
+  .since strong{font-size:20px;color:var(--teal)}
+
+  /* checklist */
+  .progress{display:flex;justify-content:space-between;align-items:baseline}
+  .count{font-size:20px;font-weight:700;color:var(--teal)}
+  .bar{height:8px;background:var(--sky);border-radius:4px;overflow:hidden;margin:8px 0 6px}
+  .bar i{display:block;height:100%;width:0;background:var(--teal);transition:width .25s}
+  .check{display:flex;gap:10px;align-items:flex-start;padding:10px 0;border-top:1px solid var(--sky);cursor:pointer}
+  .check input{width:22px;height:22px;accent-color:var(--teal);margin-top:1px;flex-shrink:0}
+  .check small{display:block;color:var(--muted);font-size:12.5px}
+  .check:has(input:checked) .t{color:var(--muted);text-decoration:line-through}
+
+  /* history */
+  .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
+  .stat{background:var(--paper);border-radius:14px;padding:12px 8px;text-align:center}
+  .stat strong{display:block;font-size:22px;color:var(--teal);line-height:1.2}
+  .stat span{font-size:12px;color:var(--muted)}
+  .days{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
+  .day{aspect-ratio:1;border-radius:10px;background:var(--sky);display:flex;flex-direction:column;
+    align-items:center;justify-content:center;font-size:11px;color:var(--muted);position:relative}
+  .day .ic{font-size:16px;line-height:1.1}
+  .day.today{outline:2px solid var(--deep)}
+  .day .dot{position:absolute;bottom:4px;left:50%;transform:translateX(-50%);height:4px;border-radius:2px;background:var(--teal)}
+  .legend{display:flex;gap:12px;flex-wrap:wrap;margin-top:10px;font-size:12px;color:var(--muted)}
+
+  /* plan */
+  .phase{position:relative;padding:10px 12px 10px 28px;border-radius:12px;margin-bottom:8px}
+  .phase::before{content:"";position:absolute;left:10px;top:16px;width:10px;height:10px;border-radius:50%;background:var(--line)}
+  .phase.now{background:var(--sky)}
+  .phase.now::before{background:var(--teal)}
+  .phase h3{font-size:15px;color:var(--deep)}
+  .phase h3 em{font-style:normal;font-weight:400;color:var(--teal);font-size:13px;margin-left:6px}
+  ul{padding-left:18px} li{margin:3px 0}
+  .avoid li::marker{color:var(--alert)}
+  .doctor{border-left:4px solid var(--alert)}
+  .doctor h2{color:var(--alert)}
+  .ghost{background:none;border:1px solid var(--teal);color:var(--teal);padding:7px 14px;border-radius:999px;font:inherit;font-size:13px;cursor:pointer}
+  .ghost.warn{border-color:var(--alert);color:var(--alert)}
+  .msg{font-size:13px;color:var(--teal);margin-left:8px}
+
+  /* tab bar */
+  nav{position:fixed;left:0;right:0;bottom:0;background:var(--paper);border-top:1px solid var(--line);
+    padding-bottom:env(safe-area-inset-bottom)}
+  nav .in{max-width:520px;margin:0 auto;display:grid;grid-template-columns:repeat(3,1fr)}
+  nav button{background:none;border:0;font:inherit;font-size:12px;color:var(--muted);padding:9px 0 10px;cursor:pointer}
+  nav button span{display:block;font-size:20px;line-height:1.2}
+  nav button.on{color:var(--deep);font-weight:700}
+  button:focus-visible,input:focus-visible{outline:2px solid var(--deep);outline-offset:2px}
+  @media (prefers-reduced-motion:reduce){.bar i{transition:none}}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="top">
+    <div>
+      <h1 id="title">今天</h1>
+      <div class="date" id="dateLabel"></div>
+    </div>
+    <div class="week" id="weekLabel"></div>
+  </div>
+
+  <!-- 今天 -->
+  <div id="tab-today">
+    <div class="focus" id="focus"></div>
+
+    <div class="card">
+      <h2>今天有排便嗎？</h2>
+      <div class="bm" id="bmBtns">
+        <button data-v="smooth"><span>😌</span>順暢</button>
+        <button data-v="hard"><span>😣</span>費力</button>
+        <button data-v="none"><span>⏳</span>還沒有</button>
+      </div>
+      <p class="since muted" id="since"></p>
+    </div>
+
+    <div class="card">
+      <div class="progress"><h2 style="margin:0">今日檢核</h2><span class="count" id="count">0 / 8</span></div>
+      <div class="bar"><i id="bar"></i></div>
+      <div id="checks"></div>
+    </div>
+  </div>
+
+  <!-- 紀錄 -->
+  <div id="tab-log" class="hidden">
+    <div class="stats">
+      <div class="stat"><strong id="stLast">–</strong><span>距上次排便</span></div>
+      <div class="stat"><strong id="stAvg">–</strong><span>平均間隔（天）</span></div>
+      <div class="stat"><strong id="stHabit">–</strong><span>近 7 天檢核率</span></div>
+    </div>
+    <div class="card">
+      <h2>最近 4 週</h2>
+      <div class="days" id="days"></div>
+      <div class="legend"><span>😌 順暢</span><span>😣 費力</span><span>底線越長＝檢核做越多</span></div>
+    </div>
+    <div class="card">
+      <h2>怎麼看</h2>
+      <p class="muted">目標是平均間隔慢慢縮短，「費力」越來越少。照做 6–8 週仍沒改善，帶著這份紀錄去看腸胃科，醫師會很有參考價值。</p>
+    </div>
+  </div>
+
+  <!-- 計畫 -->
+  <div id="tab-plan" class="hidden">
+    <div class="card">
+      <h2>早上的黃金時段</h2>
+      <p>起床溫水 → 吃早餐 → 咖啡或溫熱飲 → 15–30 分鐘後去坐</p>
+      <p class="muted" style="margin-top:6px">沒便意也坐 5 分鐘，最多 10 分鐘，不滑手機，腳下墊小凳子、身體微前傾。</p>
+    </div>
+    <div class="card">
+      <h2>8 週進度</h2>
+      <div id="phases"></div>
+    </div>
+    <div class="card">
+      <h2>避開這些</h2>
+      <ul class="avoid">
+        <li>含番瀉葉、決明子的酵素或茶，作用和瀉藥一樣</li>
+        <li>長期自行吃刺激性瀉藥</li>
+        <li>忍便意、長時間坐馬桶硬擠</li>
+        <li>纖維一次加太多卻沒多喝水</li>
+      </ul>
+    </div>
+    <div class="card doctor">
+      <h2>這些情況請看腸胃科</h2>
+      <ul>
+        <li>照做 6–8 週仍沒改善</li>
+        <li>血便或黑便、體重莫名下降、劇烈腹痛</li>
+        <li>腹瀉和便秘交替出現</li>
+        <li>家族有大腸癌病史</li>
+      </ul>
+      <p class="muted" style="margin-top:8px">從小就這樣、每次要很久，可能涉及骨盆底肌肉協調，醫師可安排檢查或生物回饋訓練。促進蠕動的藥（如 prucalopride）、軟便藥（如氧化鎂）需經醫師評估開立。</p>
+    </div>
+    <div class="card">
+      <h2>設定</h2>
+      <p class="muted" id="startLabel" style="margin-bottom:10px"></p>
+      <button class="ghost warn" id="restart">重新開始計畫</button><span class="msg" id="msg" role="status"></span>
+      <p class="muted" style="margin-top:12px">本 App 為一般生活建議，不能取代醫師診斷。</p>
+    </div>
+  </div>
+</div>
+
+<nav><div class="in">
+  <button data-tab="today" class="on"><span>☀️</span>今天</button>
+  <button data-tab="log"><span>📅</span>紀錄</button>
+  <button data-tab="plan"><span>🧭</span>計畫</button>
+</div></nav>
+
+<script>
+const ITEMS=[
+  {t:'起床喝一杯溫水'},
+  {t:'吃了早餐'},
+  {t:'早餐後去坐 5–10 分鐘',s:'腳墊高、身體微前傾，不硬擠'},
+  {t:'喝水 1.5–2 公升'},
+  {t:'2 顆綠色奇異果，或幾顆黑棗'},
+  {t:'運動 20–30 分鐘（任選一種）',s:'快走、爬樓梯、騎腳踏車、慢跑、跳繩、原地踏步、深蹲，可以拆成幾段'},
+  {t:'睡前順時針按摩肚子 5 分鐘'},
+  {t:'伸展 5 分鐘',s:'抱膝搖晃、仰躺扭轉、貓牛式、腹式呼吸'}
+];
+const PHASES=[
+  {w:[1,2],name:'建立節奏',focus:'固定早餐後去坐，每天喝足水，有便意馬上去。',
+   items:['固定早餐後如廁、起床溫水','每天喝水 1.5–2 公升','有便意馬上去，不要忍']},
+  {w:[3,4],name:'調整飲食',focus:'加入奇異果或黑棗，早餐換燕麥，每餐有蔬菜。',
+   items:['每天奇異果或黑棗','早餐換燕麥，每餐一份蔬菜','想加強可用洋車前子，從半小匙開始，配大量水']},
+  {w:[5,8],name:'加入運動',focus:'每天運動 20–30 分鐘，任選一種，加上睡前伸展。',
+   items:['每天運動 20–30 分鐘，從走路開始，習慣後加入跳繩、爬樓梯等','睡前按摩肚子、伸展 5 分鐘','觀察紀錄頁的平均間隔']}
+];
+const KEY='gut-app-v1';
+const hasClaude=typeof window.storage!=='undefined';
+const store={
+  async get(){
+    if(hasClaude){const r=await window.storage.get(KEY,false);return r?r.value:null;}
+    try{return window.localStorage.getItem(KEY);}catch(e){return null;}
+  },
+  async set(v){
+    if(hasClaude){await window.storage.set(KEY,v,false);return;}
+    try{window.localStorage.setItem(KEY,v);}catch(e){}
+  }
+};
+let state={start:null,days:{}};
+
+const pad=n=>String(n).padStart(2,'0');
+const keyOf=d=>d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
+const todayKey=()=>keyOf(new Date());
+const parse=k=>{const [y,m,d]=k.split('-').map(Number);return new Date(y,m-1,d);};
+const diffDays=(a,b)=>Math.round((parse(b)-parse(a))/86400000);
+const day=k=>state.days[k]||(state.days[k]={checked:ITEMS.map(()=>false),bm:null});
+
+async function save(){
+  try{await store.set(JSON.stringify(state));}
+  catch(e){console.error('儲存失敗',e);}
+}
+async function load(){
+  try{const v=await store.get(); if(v) state=JSON.parse(v);}
+  catch(e){/* 第一次使用 */}
+  if(!state.start){state.start=todayKey();save();}
+  render();
+}
+
+function weekNo(){return Math.floor(diffDays(state.start,todayKey())/7)+1;}
+function phaseNow(){const w=weekNo();return PHASES.find(p=>w>=p.w[0]&&w<=p.w[1])||PHASES[2];}
+
+function renderHeader(tab){
+  const d=new Date();
+  const wd='日一二三四五六'[d.getDay()];
+  document.getElementById('dateLabel').textContent=`${d.getMonth()+1}月${d.getDate()}日 星期${wd}`;
+  document.getElementById('title').textContent={today:'今天',log:'紀錄',plan:'計畫'}[tab];
+  const w=weekNo();
+  document.getElementById('weekLabel').textContent=w<=8?`第 ${w} 週 / 8`:`第 ${w} 週・持續中`;
+}
+
+function renderToday(){
+  const p=phaseNow();
+  document.getElementById('focus').innerHTML=`<b>本階段重點：${p.name}</b><br>${p.focus}`;
+  const d=day(todayKey());
+  const box=document.getElementById('checks');
+  box.innerHTML='';
+  ITEMS.forEach((it,i)=>{
+    const lab=document.createElement('label');lab.className='check';
+    lab.innerHTML=`<input type="checkbox" ${d.checked[i]?'checked':''}><span class="t">${it.t}${it.s?`<small>${it.s}</small>`:''}</span>`;
+    lab.querySelector('input').addEventListener('change',e=>{d.checked[i]=e.target.checked;updateProgress();save();});
+    box.appendChild(lab);
+  });
+  document.querySelectorAll('#bmBtns button').forEach(b=>{
+    b.classList.toggle('on',d.bm===b.dataset.v);
+    b.onclick=()=>{d.bm=d.bm===b.dataset.v?null:b.dataset.v;save();renderToday();};
+  });
+  updateProgress();
+  const last=lastBM();
+  document.getElementById('since').innerHTML=last===null?'還沒有排便紀錄，有排的那天點「順暢」或「費力」。'
+    :last===0?'今天有排，做得好。':`距上次排便 <strong>${last}</strong> 天`;
+}
+function updateProgress(){
+  const d=day(todayKey());
+  const n=d.checked.filter(Boolean).length;
+  document.getElementById('count').textContent=`${n} / ${ITEMS.length}`;
+  document.getElementById('bar').style.width=(n/ITEMS.length*100)+'%';
+}
+
+function bmDates(){return Object.keys(state.days).filter(k=>['smooth','hard'].includes(state.days[k].bm)).sort();}
+function lastBM(){const a=bmDates();return a.length?diffDays(a[a.length-1],todayKey()):null;}
+
+function renderLog(){
+  const a=bmDates();
+  const last=lastBM();
+  document.getElementById('stLast').textContent=last===null?'–':last===0?'今天':last+' 天';
+  if(a.length>=2){
+    let sum=0;for(let i=1;i<a.length;i++)sum+=diffDays(a[i-1],a[i]);
+    document.getElementById('stAvg').textContent=(sum/(a.length-1)).toFixed(1);
+  }else document.getElementById('stAvg').textContent='–';
+  let done=0;const now=new Date();
+  for(let i=0;i<7;i++){const d=new Date(now);d.setDate(now.getDate()-i);const r=state.days[keyOf(d)];if(r)done+=r.checked.filter(Boolean).length;}
+  document.getElementById('stHabit').textContent=Math.round(done/(7*ITEMS.length)*100)+'%';
+
+  const grid=document.getElementById('days');grid.innerHTML='';
+  const end=new Date();const startD=new Date(end);startD.setDate(end.getDate()-27);
+  for(let i=0;i<28;i++){
+    const d=new Date(startD);d.setDate(startD.getDate()+i);
+    const k=keyOf(d);const r=state.days[k];
+    const el=document.createElement('div');el.className='day'+(k===todayKey()?' today':'');
+    const ic=r&&r.bm==='smooth'?'😌':r&&r.bm==='hard'?'😣':'';
+    const pct=r?r.checked.filter(Boolean).length/ITEMS.length:0;
+    el.innerHTML=`<span class="ic">${ic}</span><span>${d.getDate()}</span>${pct?`<i class="dot" style="width:${Math.max(15,pct*70)}%"></i>`:''}`;
+    grid.appendChild(el);
+  }
+}
+
+function renderPlan(){
+  const w=weekNo();const box=document.getElementById('phases');box.innerHTML='';
+  PHASES.forEach(p=>{
+    const now=w>=p.w[0]&&(w<=p.w[1]||(p===PHASES[2]&&w>8));
+    const el=document.createElement('div');el.className='phase'+(now?' now':'');
+    el.innerHTML=`<h3>${p.name}<em>第 ${p.w[0]}–${p.w[1]} 週${now?'・目前':''}</em></h3><ul>${p.items.map(x=>`<li>${x}</li>`).join('')}</ul>`;
+    box.appendChild(el);
+  });
+  const s=parse(state.start);
+  document.getElementById('startLabel').textContent=`計畫開始日：${s.getFullYear()}/${s.getMonth()+1}/${s.getDate()}`;
+}
+
+let current='today';
+function render(){
+  renderHeader(current);
+  ['today','log','plan'].forEach(t=>document.getElementById('tab-'+t).classList.toggle('hidden',t!==current));
+  document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on',b.dataset.tab===current));
+  if(current==='today')renderToday();
+  if(current==='log')renderLog();
+  if(current==='plan')renderPlan();
+  window.scrollTo(0,0);
+}
+document.querySelectorAll('nav button').forEach(b=>b.addEventListener('click',()=>{current=b.dataset.tab;render();}));
+
+let confirmRestart=false;
+const msg=document.getElementById('msg');
+document.getElementById('restart').addEventListener('click',()=>{
+  if(!confirmRestart){
+    confirmRestart=true;msg.textContent='再按一次確認，所有紀錄會清空';
+    setTimeout(()=>{confirmRestart=false;msg.textContent='';},4000);return;
+  }
+  confirmRestart=false;state={start:todayKey(),days:{}};save();msg.textContent='已重新開始，從第 1 週算起';
+  renderPlan();renderHeader(current);
+});
+
+load();
+</script>
+</body>
+</html>
